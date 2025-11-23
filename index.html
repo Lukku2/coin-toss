@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.png">
+<meta name="theme-color" content="#111827">
+  
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Coin Toss</title>
+    <style>
+        body {
+            background-color: #111827; /* Dark Gray */
+            color: white;
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        h1 {
+            color: #fbbf24; /* Amber */
+            margin-bottom: 40px;
+            font-size: 24px;
+            letter-spacing: 2px;
+        }
+
+        /* The 3D Scene */
+        .coin-container {
+            width: 200px;
+            height: 200px;
+            perspective: 1000px;
+            margin-bottom: 50px;
+        }
+
+        .coin {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            /* Transition handled in JS */
+        }
+
+        .face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: bold;
+            border: 8px solid #b45309; /* Dark Orange Border */
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        .heads {
+            background: #f59e0b; /* Orange/Gold */
+            color: #78350f;
+        }
+
+        .tails {
+            background: #f59e0b;
+            color: #78350f;
+            transform: rotateY(180deg);
+        }
+
+        /* 3D Thickness Simulation */
+        .coin::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            border-radius: 50%;
+            transform: translateZ(-5px);
+            background: #b45309;
+        }
+
+        /* Result Text */
+        #result {
+            height: 30px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #d1d5db;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+
+        /* Button */
+        button {
+            background-color: #4f46e5; /* Indigo */
+            color: white;
+            border: none;
+            padding: 15px 50px;
+            font-size: 18px;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            font-weight: bold;
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        button:disabled {
+            background-color: #4b5563;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>COIN TOSS</h1>
+
+    <div id="result">Ready</div>
+
+    <div class="coin-container" onclick="toss()">
+        <div class="coin" id="coin">
+            <div class="face heads">H</div>
+            <div class="face tails">T</div>
+        </div>
+    </div>
+
+    <button id="btn" onclick="toss()">FLIP</button>
+
+    <script>
+        const coin = document.getElementById('coin');
+        const btn = document.getElementById('btn');
+        const resultText = document.getElementById('result');
+        let currentRotation = 0;
+
+        function toss() {
+            // Disable button
+            btn.disabled = true;
+            resultText.innerText = "Flipping...";
+            
+            // Random result: 0 or 1
+            const isHeads = Math.random() < 0.5;
+            
+            // We want to spin a lot (5 times = 1800 degrees)
+            // If Heads, land on multiple of 360 (e.g., 0, 360, 720)
+            // If Tails, land on multiple of 360 + 180 (e.g., 180, 540)
+            
+            const spins = 1800; // 5 full rotations
+            
+            // Calculate where we are currently relative to a full circle
+            const currentMod = currentRotation % 360;
+            
+            // Calculate adjustments
+            // If we want heads (0 mod 360), we need to reach the next full circle
+            // If we want tails (180 mod 360), we need to reach the next half circle
+            
+            let target = isHeads ? 0 : 180;
+            
+            // Math to ensure we always spin forward smoothly
+            let distance = (target - currentMod + 360) % 360;
+            
+            // If distance is too short, add another rotation for effect
+            if (distance < 180) distance += 360;
+            
+            const newRotation = currentRotation + spins + distance;
+
+            // Apply style
+            coin.style.transition = "transform 3s cubic-bezier(0.2, 0, 0.2, 1)";
+            coin.style.transform = `rotateY(${newRotation}deg)`;
+            
+            // Update state
+            currentRotation = newRotation;
+
+            // Wait for animation
+            setTimeout(() => {
+                btn.disabled = false;
+                resultText.innerText = isHeads ? "HEADS!" : "TAILS!";
+                resultText.style.color = isHeads ? "#fcd34d" : "#a5b4fc";
+                
+                // Haptic feedback if available
+                if(navigator.vibrate) navigator.vibrate(50);
+                
+            }, 3000);
+        }
+    </script>
+  <script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
+  }
+  </script>
+  
+</body>
+</html>
